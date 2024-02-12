@@ -47,26 +47,24 @@ def crawlUrl():
 
 def selenium_crawl_page(url):
     chrome_options = Options()
-    #chrome_options.add_argument('--headless=new')
-    chrome_options.add_argument('window-size=1200x600')
+    chrome_options.add_argument('--headless=new')
     chrome_options.add_argument("--disable-gpu")  # Disable GPU (optional, recommended for some environments)
     chrome_options.add_argument("--no-sandbox")  # Bypass OS security model, required on some environments
     chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--page-load-strategy=none")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    # chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.53 Safari/537.36")
     chrome_options.add_argument('log-level=3')
-    #chrome_options.add_argument('--disable-application-cache')
     chrome_options.add_argument("--disable-setuid-sandbox")
     chrome_options.add_argument("--blink-settings=imagesEnabled=false")
-    chrome_options.add_argument(r"--user-data-dir=C:\Users\scraper\AppData\Local\Google\Chrome SxS\User Data");
-    chrome_options.add_argument('--profile-directory=Default');
+    chrome_options.add_argument('--profile-directory=Default')
     chrome_options.add_argument("--page-load-strategy=eager")  # Don't wait for full page load, improving speed for tests that don't require complete page resources.
-    chrome_options.binary_location=r'C:\Users\scraper\AppData\Local\Google\Chrome SxS\Application\chrome.exe'
-    # chrome_options.set_capability('command_executor', 'http://10.154.0.2:4444')
-    # Initialize the Remote WebDriver with Selenium Wire support
-    browser = webdriver.Remote(command_executor='http://10.154.0.2:4444' , options=chrome_options)
+    #user_data_dir = os.environ.get("CHROME_USER_DATA_DIR", r"C:\Users\scraper\AppData\Local\Google\Chrome SxS\User Data")
+    #chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+
+    # Connect to Selenium Hub
+    selenium_hub_url = 'http://selenium-hub:4444/wd/hub'
+    browser = webdriver.Remote(command_executor=selenium_hub_url, options=chrome_options)
     #browser = webdriver.Chrome(options=chrome_options)
     print("Crawler initiated on url:" + url)
 
@@ -74,7 +72,7 @@ def selenium_crawl_page(url):
     browser.get(url)
     if check_for_captcha(browser):
         solve_captcha(browser)
-    browser.save_screenshot('screenshot_before_finding_description.png')
+    browser.save_screenshot('/screenshots/screenshot_before_finding_description.png')
     # Ensure the browser is always closed
     html_source = browser.page_source
     # Using with statement for file operations is recommended as it handles opening and closing the file automatically
@@ -101,7 +99,7 @@ def selenium_crawl_page(url):
                 break
     finally:
 
-        browser.save_screenshot('screenshot_before_closing_browser.png')
+        browser.save_screenshot('/screenshots/screenshot_before_closing_browser.png')
         # This block executes regardless of what happens above
         try:
             # Attempt to capture content here
@@ -191,7 +189,7 @@ def solve_captcha(browser):
                 print("Error detected, refreshing page...")
                 browser.refresh()
                 WebDriverWait(browser, 30).until(EC.visibility_of_element_located((By.ID, "nc_1_n1z")))
-                browser.save_screenshot('screenshot_page_refresh_done.png')
+                browser.save_screenshot('/screenshots/screenshot_page_refresh_done.png')
             captcha_not_complete = False
     except TimeoutException:
         print("Timed out waiting for captcha to be solved.")

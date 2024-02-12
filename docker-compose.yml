@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  selenium-hub:
+    image: selenium/hub:4.0.0
+    ports:
+      - "4444:4444"
+    networks:
+      - selenium-grid
+
+  chrome-node:
+    image: selenium/node-chrome:4.0.0
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    networks:
+      - selenium-grid
+
+  my-application:
+    build: .
+    depends_on:
+      - selenium-hub
+    environment:
+      - SELENIUM_HUB=http://selenium-hub:4444/wd/hub
+      #- CHROME_USER_DATA_DIR=/path/inside/container
+      #- CHROME_BINARY= # If using Chrome inside the container, set this path, or leave blank to use default
+    #volumes:
+      #- ./data/chrome_user_data:/path/inside/container # Example of mounting a host directory
+    ports:
+      - "5000:5000" # Expose port 5000 if your Flask app runs on this port
+    networks:
+      - selenium-grid
+
+networks:
+  selenium-grid:
+    name: selenium-grid
